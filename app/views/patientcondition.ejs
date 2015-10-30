@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Clinical Support Decision - Charmander | Patient Conditions</title>
+    <% include ./partials/head %>	
+  </head>
+  
+  <body class="hold-transition skin-blue sidebar-mini">
+    <div class="wrapper">
+
+      <% include ./partials/header %>
+      <% include ./partials/side %>
+
+      <!-- Content Wrapper. Contains page content -->
+      <div class="content-wrapper">
+        <!-- Content Header (Page header) -->
+        <section class="content-header">
+          <h1>
+            Patient Conditions
+			  <small id="pId"></small>
+          </h1>			
+          <ol class="breadcrumb">
+			<li><a href="/"><i class="fa fa-dashboard"></i> Home</a></li>
+            <li><a href="/patientlist">Patient List</a></li>
+            <li class="active">Patient Detail</li>
+          </ol>
+        </section>
+		  
+        <!-- Main content -->
+        <section class="content">
+
+		  <div class="callout callout-danger">
+            <h4><i class="fa fa-warning"></i> Alerts:</h4>
+            <p>This patient is in high risk of critical health problems.  Please do something!!</p>
+          </div>
+			
+          <!-- Your Page Content Here -->
+		  <div class="box">                
+			<div class="box-body">
+			  <!-- title row -->
+			  <div class="row">
+				<div class="col-xs-12">
+				  <h2 class="page-header" id="pName">
+
+				  </h2>
+				</div><!-- /.col -->
+			  </div>
+			  <div class="row">
+				<div class="col-xs-12">
+				  	<div class="box-body">
+					  <dl class="dl-horizontal">
+						<dt>Address</dt>
+						<dd id="pAddress"></dd>
+						<dt>Age</dt>
+						<dd id="pAge"></dd>
+						<dt>Active</dt>
+						<dd id="pActive"></dd>
+					  </dl>
+					</div>
+				</div>
+			  </div>
+
+			</div><!-- /.box-body -->			  
+          </div><!-- /.box -->
+	 
+		  <div class="box">
+			<div class="box-body">
+			  <table id="patients" class="table table-bordered table-striped">
+				<thead>
+				<tr>
+				  <th style="width: 20px">#</th>
+				  <th>Name</th>
+				  <th>Code</th>
+				  <th>Status</th>
+				  <th>Notes</th>
+				  <th style="width: 200px">Time</th>
+				</tr>
+				</thead>
+				<tbody id="patient_data">
+				<!-- Loading (remove the following to stop the loading)-->
+				<div id="loading" class="overlay">
+					<i class="fa fa-refresh fa-spin"></i>
+				</div>
+				<!-- end loading -->
+				</tbody>
+				<tfoot>
+				  <tr>
+				  <th style="width: 20px">#</th>
+				  <th>Name</th>
+				  <th>Code</th>
+				  <th>Status</th>
+				  <th>Notes</th>
+				  <th style="width: 200px">Time</th>
+				</tr>
+				</tfoot>
+			  </table>
+			</div><!-- /.box-body -->
+		  </div><!-- /.box -->
+			
+        </section><!-- /.content -->
+      </div><!-- /.content-wrapper -->
+
+      <% include ./partials/footer %>
+      
+      <!-- Add the sidebar's background. This div must be placed
+           immediately after the control sidebar -->
+      <div class="control-sidebar-bg"></div>
+    </div><!-- ./wrapper -->
+
+	<!-- REQUIRED JS SCRIPTS -->
+
+	<!-- FHIR client -->
+    <!--script src="../fhir/fhir-client.min.js"></script-->
+
+    <!-- jQuery 2.1.4 -->
+    <script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+    <!-- Bootstrap 3.3.5 -->
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+	<!-- DataTables -->
+    <script src="https://cdn.datatables.net/1.10.9/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.10.9/js/dataTables.bootstrap.min.js"></script>
+	<!-- SlimScroll -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jQuery-slimScroll/1.3.6/jquery.slimscroll.min.js"></script>
+	<!-- iCheck 1.0.1 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/iCheck/1.0.1/icheck.min.js"></script>
+    <!-- FastClick -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fastclick/1.0.6/fastclick.min.js"></script>
+    <!-- AdminLTE App -->
+    <script src="/static/js/app.min.js"></script>
+
+    <!-- Optionally, you can add Slimscroll and FastClick plugins.
+         Both of these plugins are recommended to enhance the
+         user experience. Slimscroll is required when using the
+         fixed layout. -->
+	  
+	<!-- page script -->
+    <script>
+    
+	  // FHIR server connection setting
+	  var fhirConfig = {
+			serviceUrl: "http://polaris.i3l.gatech.edu:8080/gt-fhir-webapp-ro/base/",
+			count: "50",
+			offset: "0",
+			fmt: "json",
+			pretty: "true"
+		  };
+	  $.parseDate = function(str) {
+		var mdy = str.substring(0,10);
+		return new Date(mdy);
+	  }
+	  $.daydiff = function(first, second) {
+		  console.info("first:" + first);
+		  console.info("second:" + second);
+		return Math.round((second-first)/(1000*60*60*24*365));
+  	  }
+	  
+	  // extract parameter value
+	  $.urlParam = function(name){
+		  var results = new RegExp('[\?&]' + name + '=([^&#]*)').exec(window.location.href);
+		return results[1] || 0;
+	  }
+	  
+	  // extract patient general information
+	  $.displayPatientGI = function(inputId){
+		  var rUrl = fhirConfig.serviceUrl + "Patient/" + 
+			  inputId + "?_format=" + fhirConfig.fmt + "&_pretty=" + fhirConfig.pretty;
+			  //"&_getpagesoffset=" + pData.offset + "&_count=" + pData.count + 
+		  console.info(rUrl);
+		  $.ajax({
+			type: 'GET',
+			contentType: 'application/json; charset=utf-8',
+			dataType: 'JSON',
+			url: rUrl
+		  })
+		  .done(function(data, status){
+			var ret = data;
+			
+			console.info(ret);
+			  
+			var pGender;
+			if (ret.gender == 'male')
+			  pGender = "<i class='fa fa-mars'></i>";
+			else
+			  pGender = "<i class='fa fa-venus'></i>";
+			var bDate = "<small class='pull-right'>Birth Date: " + ret.birthDate + "</small>";
+			var pAge = $.daydiff($.parseDate(ret.birthDate),new Date());
+			//console.log(pAge);
+			  
+			var fName = ret.name[0].given[0];
+			var mName = ret.name[0].given[1];
+			var lName = ret.name[0].family[0];
+			var ads = ret.address[0].line[0] + ". " + 
+					ret.address[0].city + ", " +
+					ret.address[0].state + " " +
+					ret.address[0].postalCode;
+			  
+			var dsp = pGender + " " + fName + " " + mName + " " + lName + bDate;
+			
+			console.log(ret.active)
+			if (ret.active == true)
+				pActive = 'Yes'
+			else
+				pActive = 'No'
+			
+			var patient = {
+				"profile": {
+					"id": inputId,
+					"gender": pGender,
+					"birthDate": bDate,
+					"age": pAge,
+					"name": fName + " " + mName + " " + lName,
+					"address": ads,
+					"display": dsp,
+					"active": pActive
+				}
+			};
+			
+			$('#pId').append('#' + patient.profile.id); // display patient index#
+			$('#pName').append(patient.profile.display);
+			$('#pAddress').append(patient.profile.address);
+			$('#pAge').append(patient.profile.age);
+			$('#pActive').append(patient.profile.active);
+			  
+		  })
+		  .fail(function(){
+			alert("Ajax failed to fetch data");
+		  });
+		
+	  }
+	  
+	  // extract patient condition information
+	  $.displayPatientObservations = function(inputId){
+		  // get observations for this patient
+		var rUrl = fhirConfig.serviceUrl + "Condition?patient=" + 
+			  inputId + "&_format=" + fhirConfig.fmt + "&_pretty=" + fhirConfig.pretty;
+			  //"&_getpagesoffset=" + pData.offset + "&_count=" + pData.count + 
+	    //console.info(rUrl);
+		// get the cached _getpages
+		$.ajax({
+			type: 'GET',
+			contentType: 'application/json; charset=utf-8',
+			dataType: 'JSON',
+			url: rUrl
+		  })
+		  .done(function(data, status){
+			rUrl = data.link[1].url;
+			
+			// get all observation records
+			rUrl = rUrl.replace("_count=10","_count="+fhirConfig.count);
+			rUrl = rUrl.replace("_getpagesoffset=10","_getpagesoffset=0");
+		  
+			$.ajax({
+				type: 'GET',
+				contentType: 'application/json; charset=utf-8',
+				dataType: 'JSON',
+				url: rUrl
+			  })
+			  .done(function(data, status){
+			  	console.log(data)
+				var ret = data.entry;
+				var lines;
+				
+				var options = {
+					weekday: "long", year: "numeric", month: "short",
+					day: "numeric", hour: "2-digit", minute: "2-digit"
+				};
+				for ( var i = 0; i < ret.length; i++) {
+					var obj = ret[i];
+					var idx = obj.resource.id;
+					var snomedCode = obj.resource.code.coding[0].code;
+					var snomedName = obj.resource.code.coding[0].display;
+					var conditionStatus = obj.resource.clinicalStatus;
+					var time = obj.resource.onsetDateTime;
+					var notes = obj.resource.notes;
+					
+					var localTime = new Date(time.replace("T"," ").substring(0,19));
+					var offsetHour = (localTime.getTimezoneOffset()/60) + eval(time.substring(19,20) + eval(time.substring(20,22)));
+					// convert time to UTC
+					localTime.setHours(localTime.getHours() + offsetHour);
+						  
+					lines = lines + "<tr>";
+					lines = lines + "<td>" + idx + "</td>";
+					lines = lines + "<td>" + snomedName + "</td>";
+					lines = lines + "<td>" + snomedCode + "</td>";
+					lines = lines + "<td>" + conditionStatus + "</td>";
+					lines = lines + "<td>" + notes + "</td>";
+					lines = lines + "<td>" + localTime.toLocaleTimeString("en-Us",options) + "</td>";
+					lines = lines + "</tr>";
+				};
+				console.log(ret);
+				
+				$('#patient_data').append(lines);
+				$('#patients').DataTable({
+					"order": [[ 5, "desc" ]]
+				});
+				
+				$('#loading').hide();
+			  
+			  })
+			  .fail(function(){
+				alert("Ajax failed to fetch data");
+			  });
+		  })
+		  .fail(function(){
+			alert("Ajax failed to fetch data");
+		  });
+		
+	  }
+	  
+      $(function () {
+		  
+		//var pId = $.urlParam('id');
+		var pId = <%=id%>;
+
+		$.displayPatientGI(pId);		
+		$.displayPatientObservations(pId);
+		  
+      });
+      
+    </script>    
+	
+  </body>
+</html>
