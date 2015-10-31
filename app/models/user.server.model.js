@@ -3,8 +3,18 @@ var mongoose = require('mongoose'),
 	Schema = mongoose.Schema;
 
 var UserSchema = new Schema({
-	firstName: String,
-	lastName: String,
+	firstName: {
+		type: String,
+		unique: true,
+		required: 'First name is required',
+		trim: true
+	},
+	lastName: {
+		type: String,
+		unique: true,
+		required: 'Last name is required',
+		trim: true
+	},
 	email: {
 		type: String,
 		match: [/.+\@.+\..+/, "Please fill a valid e-mail address"]
