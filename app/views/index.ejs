@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html ng-app="app">
+<html>
   <head>
     <title>Clinical Support Decision - Charmander | Home</title>
     <% include ./partials/head %>
@@ -16,8 +16,8 @@
         <a href="patientlist" target="_blank">Patient List</a> - List of patients that you are caring <br>
 		<a href="patientdetail/1/observation" target="_blank">Patient Observation</a> - Details of selected patient<br>
 		<a href="patientdetail/1/condition" target="_blank">Patient Condition</a> - Details of selected patient<br>
-		<a href="login" target="_blank">Login</a> - Login Screen<br>
-		<a href="register" target="_blank">Register</a> - Register a new user<br>
+		<a href="signin" target="_blank">Login</a> - Login Screen<br>
+		<a href="signup" target="_blank">Register</a> - Register a new user<br>
 		<a href="lock" target="_blank">Lock Screen</a> - Session is timed out<br>
       </div>
       <div class="lockscreen-footer text-center">
@@ -31,24 +31,7 @@
 	  if ('ok' == '<%=result %>') {
 		  alert('<%=data %>');
 	  }
-    </script>
-    <script src="//code.jquery.com/jquery-2.0.3.min.js"></script>
-    <script src="//code.angularjs.org/1.2.20/angular.js"></script>
-    <script src="//code.angularjs.org/1.2.20/angular-route.js"></script>
-    <script src="//code.angularjs.org/1.2.13/angular-cookies.js"></script>
-
-    <script src="app.js"></script>
-    <script src="app-services/authentication.service.js"></script>
-    <script src="app-services/flash.service.js"></script>
-
-    <!-- Real user service that uses an api -->
-    <!-- <script src="app-services/user.service.js"></script> -->
-
-    <!-- Fake user service for demo that uses local storage -->
-    <script src="app-services/user.service.local-storage.js"></script>
-
-    <script src="home/home.controller.js"></script>
-    <script src="login/login.controller.js"></script>
-    <script src="register/register.controller.js"></script>  
+    </script>  
+	<% include ./partials/bottom %>	
   </body>
 </html>

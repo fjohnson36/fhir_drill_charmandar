@@ -2,11 +2,20 @@ exports.render = function(req, res) {
 	Patient.find({}, function(err, patients) {
 		if (err) {
 			return next(err);			
-		} else {			
-			res.render('patients', {
-				data: patients,
-				pagetype: 'patients'
-			});
+		} else {	
+			if (!req.user) {
+				req.session.returnTo = '/patientlist';
+
+				res.render('signin', {
+					messages: ''
+				});
+			} else {
+				res.render('patients', {
+					title: 'Patient List',
+					data: patients,
+					pagetype: 'patients'
+				});
+			}
 		}
 	});
 };

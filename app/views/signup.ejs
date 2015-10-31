@@ -9,20 +9,37 @@
       <div class="register-logo">
         <a href="#"><b>CSD</b>Charmander</a>
       </div>
-
+		
+	  <% if (messages[0]) { %>
+	  <div class="callout callout-danger">
+		<h4><i class="fa fa-warning"></i> Errors:</h4>
+		<% for(var i in messages) { %>
+		  <div class="flash"><%= messages[i] %></div>
+		<% } %>
+	  </div>
+	  <% } %>
+		
       <div class="register-box-body">
         <p class="login-box-msg">Register a new membership</p>
-        <form action="starter.html" method="post">
+        <form action="/signup" method="post">
           <div class="form-group has-feedback">
-            <input type="text" class="form-control" placeholder="Full name">
+            <input type="text" class="form-control" placeholder="First name" name="firstName">
+            <span class="glyphicon glyphicon-user form-control-feedback"></span>
+          </div>
+		  <div class="form-group has-feedback">
+            <input type="text" class="form-control" placeholder="Last name" name="lastName">
             <span class="glyphicon glyphicon-user form-control-feedback"></span>
           </div>
           <div class="form-group has-feedback">
-            <input type="email" class="form-control" placeholder="Email">
+            <input type="email" class="form-control" placeholder="Email" name="email">
             <span class="glyphicon glyphicon-envelope form-control-feedback"></span>
           </div>
+		  <div class="form-group has-feedback">
+            <input type="text" class="form-control" placeholder="Username" name="username">
+            <span class="glyphicon glyphicon-user form-control-feedback"></span>
+          </div>
           <div class="form-group has-feedback">
-            <input type="password" class="form-control" placeholder="Password">
+            <input type="password" class="form-control" placeholder="Password" name="password">
             <span class="glyphicon glyphicon-lock form-control-feedback"></span>
           </div>
           <div class="form-group has-feedback">
@@ -43,7 +60,7 @@
           </div>
         </form>
 
-        <a href="/login" class="text-center">I already have a membership</a>
+        <a href="/signin" class="text-center">I already have a membership</a>
       </div><!-- /.form-box -->
     </div><!-- /.register-box -->
 
@@ -62,5 +79,6 @@
         });
       });
     </script>
+	<% include ./partials/bottom %>	
   </body>
 </html>

@@ -1,18 +1,42 @@
+var User = require('mongoose').model('User'),
+	passport = require('passport');
+
 exports.render = function(req, res) {
 	
 	var patient_id = req.patientId;
 	var category = req.category;
 	
 	if (category == 'observation') {
-		res.render('patientobservation', {
-			id: patient_id,
-			pagetype: 'patientobservation'
-		});
+		
+		if (!req.user) {
+			req.session.returnTo = '/patientdetail/' + patient_id + '/observation';
+				
+			res.render('signin', {
+				messages: ''
+			});
+		} else {
+			res.render('patientobservation', {
+				title: 'Patient Observations',
+				id: patient_id,
+				pagetype: 'patientobservation'
+			});
+		}
+		
+		
 	} else if (category == 'condition') {
-		res.render('patientcondition', {
-			id: patient_id,
-			pagetype: 'patientcondition'
-		});
+		if (!req.user) {
+			req.session.returnTo = '/patientdetail/' + patient_id + '/condition';
+				
+			res.render('signin', {
+				messages: ''
+			});
+		} else {
+			res.render('patientcondition', {
+				title: 'Patient Conditions',
+				id: patient_id,
+				pagetype: 'patientcondition'
+			});
+		}
 	}
 };
 

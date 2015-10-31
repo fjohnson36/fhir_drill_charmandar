@@ -9,15 +9,25 @@
       <div class="login-logo">
         <a href="/"><b>CSD</b>Charmander</a>
       </div><!-- /.login-logo -->
+	  
+	  <% if (messages[0]) { %>
+	  <div class="callout callout-danger">
+		<h4><i class="fa fa-warning"></i> Errors:</h4>
+		<% for(var i in messages) { %>
+		  <div class="flash"><%= messages[i] %></div>
+		<% } %>
+	  </div>
+	  <% } %>
+		
       <div class="login-box-body">
         <p class="login-box-msg">Sign in to start your session</p>
-        <form action="starter.html" method="post">
+        <form action="/signin" method="post">
           <div class="form-group has-feedback">
-            <input type="email" class="form-control" placeholder="Email">
-            <span class="glyphicon glyphicon-envelope form-control-feedback"></span>
+            <input type="text" class="form-control" placeholder="Username" name="username">
+            <span class="glyphicon glyphicon-user form-control-feedback"></span>
           </div>
           <div class="form-group has-feedback">
-            <input type="password" class="form-control" placeholder="Password">
+            <input type="password" class="form-control" placeholder="Password" name="password">
             <span class="glyphicon glyphicon-lock form-control-feedback"></span>
           </div>
           <div class="row">
@@ -35,7 +45,7 @@
         </form>
 
         <a href="#">I forgot my password</a><br>
-        <a href="/register" class="text-center">Register a new membership</a>
+        <a href="/signup" class="text-center">Register a new membership</a>
 
       </div><!-- /.login-box-body -->
     </div><!-- /.login-box -->
@@ -55,5 +65,6 @@
         });
       });
     </script>
+	<% include ./partials/bottom %>	
   </body>
 </html>

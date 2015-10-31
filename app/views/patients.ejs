@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Clinical Support Decision - Charmander | Patient List</title>
+    <title>Clinical Support Decision - Charmander | <%=title %></title>
     <% include ./partials/head %>	
   </head>
   
@@ -16,12 +16,12 @@
         <!-- Content Header (Page header) -->
         <section class="content-header">
           <h1>
-            Patient List
+            <%=title %>
             <small>List of patients that you are caring</small>
           </h1>
           <ol class="breadcrumb">
             <li><a href="/"><i class="fa fa-dashboard"></i> Home</a></li>
-            <li class="active">Patient List</li>
+            <li class="active"><%=title %></li>
           </ol>
         </section>
 
@@ -180,6 +180,6 @@
 		
       });
     </script>    
-	
+	<% include ./partials/bottom %>		
   </body>
 </html>
