@@ -29,9 +29,9 @@
         <!-- Main content -->
         <section class="content">
 
-		  <div class="callout callout-danger">
+		  <div id="alert" class="callout callout-danger" style="display:none">
             <h4><i class="fa fa-warning"></i> Alerts:</h4>
-            <p>This patient is in high risk of critical health problems.  Please do something!!</p>
+            <p>This patient is in high risk of the following critical health problems:</p>
           </div>
 			
           <!-- Your Page Content Here -->
@@ -249,8 +249,28 @@
 			  })
 			  .done(function(data, status){
 				var ret = data.entry;
+				var alert = false;
+				var checkAlerts = function(display, value) {
+					var alerts = {
+						"Systolic blood pressure": 170,
+						"Diastolic blood pressure": 100,
+						"Heart rate": 120,
+						"Respiratory rate": 22,
+						"Body temperature": 102, 
+						"Cholesterol [Mass/volume] in Serum or Plasma": 260,
+						"Body mass index (BMI) [Ratio]": 33
+					};
+					for (var param in alerts) {
+						if (param==display && value>alerts[param]) {
+							console.log(param);
+							return true;
+						}
+					}
+					return false;
+				};
 
 				var lines;
+				var alerts = {};
 				
 				var options = {
 					weekday: "long", year: "numeric", month: "short",
@@ -263,7 +283,6 @@
 					var idx = obj.resource.id;
 					var display = obj.resource.code.coding[0].display;
 					var time = obj.resource.appliesDateTime;
-					
 					var localTime = new Date(time.replace("T"," ").substring(0,19));
 					var offsetHour = (localTime.getTimezoneOffset()/60) + eval(time.substring(19,20) + eval(time.substring(20,22)));
 					// convert time to UTC
@@ -272,21 +291,51 @@
 					var metricVal;
 
 					// check if it is string type value or quantity type value
-					if (obj.resource.valueString != null)
-					  metricVal = obj.resource.valueString;
-					else
-					  metricVal = obj.resource.valueQuantity.value +
-						  obj.resource.valueQuantity.units;
-
-					lines = lines + "<tr>";
-					lines = lines + "<td>" + idx + "</td>";
-					lines = lines + "<td>" + display + "</td>";
-					lines = lines + "<td>" + metricVal + "</td>";
-					lines = lines + "<td>" + localTime.toLocaleTimeString("en-Us",options) + "</td>";
-					lines = lines + "</tr>";
-
+					if (obj.resource.valueString != null) {
+						metricVal = obj.resource.valueString;
+					} else {
+						metricVal = obj.resource.valueQuantity.value + obj.resource.valueQuantity.units;
+						// checking alerts
+						if (checkAlerts(display, obj.resource.valueQuantity.value)==true){
+							alert=true;
+							
+							if (alerts[display]==null) {
+								alerts[display] = {
+									id: idx,
+									line: '<li>#'+ idx +': '+ display + ' = ' + metricVal +'</li>',
+									time: time
+								};
+							} else if (alerts[display]!=null) {
+								// if (Date.parse(alerts[display].time) < Date.parse(time)) {
+								if (parseInt(alerts[display].id) < parseInt(idx)) {
+									alerts[display] = {
+										id: idx,
+										line: '<li>#'+ idx +': '+ display + ' = ' + metricVal +'</li>',
+										time: time
+									};
+								}
+							} 
+						}
+					}
+					
+					lines += "<tr>" +
+							 "<td>" + idx + "</td>" +
+							 "<td>" + display + "</td>" +
+							 "<td>" + metricVal + "</td>" +
+							 "<td>" + localTime.toLocaleTimeString("en-Us",options) + "</td>" +
+							 "</tr>";
+					
 				};
-
+				// alert logic
+				if (alert==true) {
+					var alertList = '';
+					for (var alert in alerts) {
+						alertList += alerts[alert].line;
+					}
+					$('#alert').css({display: 'inherit'});
+					$('#alert').append("<ul style='list-style-type:none;'>"+alertList+"</ul>");
+				}
+					
 				console.log(ret);
 
 				$('#patient_data').append(lines);
@@ -306,7 +355,7 @@
 			alert("Ajax failed to fetch data");
 		});
 		
-	  }
+	  };
 	  
       $(function () {
 		  
