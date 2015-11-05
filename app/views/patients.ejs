@@ -148,6 +148,10 @@
 					lines = lines + "</tr>";
 
 				};
+				$('#loading').hide();
+
+				  //console.log(lines);
+				$('#patient_data').append(lines);
 				
 				//iCheck for checkbox and radio inputs
 				$('input[type="checkbox"].minimal, input[type="radio"].minimal').iCheck({
@@ -159,10 +163,7 @@
 				  checkboxClass: 'icheckbox_flat-green',
 				  radioClass: 'iradio_flat-green'
 				});
-				$('#loading').hide();
-
-				  //console.log(lines);
-				$('#patient_data').append(lines);
+				
 
 				$('#patients').DataTable();
 
