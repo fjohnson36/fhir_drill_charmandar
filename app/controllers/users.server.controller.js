@@ -86,6 +86,8 @@ exports.signup = function(req, res, next) {
 };
 
 exports.signout = function(req, res) {
+	// clear the remember me cookie when logging out
+	res.clearCookie('remember_me');
 	req.logout();
 	res.redirect('/');
 };
