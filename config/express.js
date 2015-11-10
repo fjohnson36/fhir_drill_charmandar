@@ -24,8 +24,10 @@ module.exports = function() {
 	app.use(methodOverride());
 	app.use(session({
 		saveUninitialized: true,
+		rolling: true,
 		resave: true,
-		secret: config.sessionSecret
+		secret: config.sessionSecret,
+        cookie: { maxAge : 60000 } //1 Hour   3600000
 	}));
 	
 	app.set('views', './app/views');
@@ -34,18 +36,16 @@ module.exports = function() {
 	app.use(flash());
 	app.use(passport.initialize());
 	app.use(passport.session());
+	//app.use(passport.authenticate('remember-me'));
 	
 	app.use('/static', express.static('./public'));
 
 	require('../app/routes/index.server.routes.js')(app);
-	//require('../app/routes/login.server.routes.js')(app);
 	require('../app/routes/lock.server.routes.js')(app);
-	//require('../app/routes/register.server.routes.js')(app);
 	require('../app/routes/users.server.routes.js')(app);
 	require('../app/routes/patients.server.routes.js')(app);
 	require('../app/routes/patientdetail.server.routes.js')(app);
 	require('../app/routes/alert.server.routes.js')(app);
-	
 	
 	return app;
 };
