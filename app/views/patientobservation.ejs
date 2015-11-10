@@ -10,7 +10,12 @@
 
       <% include ./partials/header %>
       <% include ./partials/side %>
-
+	  <div id="alertbg" style="display:none;width:10000px; height:10000px;"></div>
+	  <dialog id="alertwindow" style='z-index:1000; position:absolute; top:25%; left:20%; width:750px;'>
+		<h3>Alerts:</h3>
+		<p id="alertmessage"></p>
+		<button id="exit">Confirm</button>
+	  </dialog>
       <!-- Content Wrapper. Contains page content -->
       <div class="content-wrapper">
         <!-- Content Header (Page header) -->
@@ -28,7 +33,7 @@
 		  
         <!-- Main content -->
         <section class="content">
-
+			
 		  <div id="alert" class="callout callout-danger" style="display:none">
             <h4><i class="fa fa-warning"></i> Alerts:</h4>
             <p>This patient is in high risk of the following critical health problems:</p>
@@ -53,6 +58,8 @@
 						<dd id="pAddress"></dd>
 						<dt>Age</dt>
 						<dd id="pAge"></dd>
+						<dt>Active</dt>
+						<dd id="pActive"></dd>
 					  </dl>
 					</div>
 				</div>
@@ -130,6 +137,27 @@
 	<!-- page script -->
     <script>
 	  // FHIR server connection setting
+	  
+	var checkAlerts = function(display, value) {
+		var alerts = {
+			"Systolic blood pressure": 170,
+			"Diastolic blood pressure": 100,
+			"Heart rate": 120,
+			"Respiratory rate": 22,
+			"Body temperature": 102, 
+			"Cholesterol [Mass/volume] in Serum or Plasma": 260,
+			"Body mass index (BMI) [Ratio]": 33
+		};
+		for (var param in alerts) {
+			if (param==display && value>alerts[param]) {
+				console.log(param);
+				return true;
+			}
+		}
+		return false;
+	};
+	var alerts = {};
+	var alert = false;
 	  var fhirConfig = {
 			serviceUrl: "http://polaris.i3l.gatech.edu:8080/gt-fhir-webapp-ro/base/",
 			count: "50",
@@ -157,13 +185,7 @@
 	  }
 	  
 	  // extract patient general information
-	  $.displayPatientGI = function(inputId){
-		  var rUrl = fhirConfig.serviceUrl + "Patient/" + 
-			  inputId + "?_format=" + fhirConfig.fmt + "&_pretty=" + fhirConfig.pretty;
-			  //"&_getpagesoffset=" + pData.offset + "&_count=" + pData.count + 
-
-		  console.info(rUrl);
-
+	  $.displayPatientGI = function(rUrl, inputId){
 		  $.ajax({
 			type: 'GET',
 			contentType: 'application/json; charset=utf-8',
@@ -191,9 +213,15 @@
 			var lName = ret.name[0].family[0];
 			var ads = ret.address[0].line[0] + ", " + 
 					ret.address[0].city + ", " +
-					ret.address[0].state;
+					ret.address[0].state +
+					ret.address[0].postalCode;;
 			  
 			var dsp = pGender + " " + fName + " " + mName + " " + lName + bDate;
+			
+			if (ret.active == true)
+				var pActive = 'Yes'
+			else
+				var pActive = 'No'
 			
 			var patient = {
 				"profile": {
@@ -203,7 +231,8 @@
 					"age": pAge,
 					"name": fName + " " + mName + " " + lName,
 					"address": ads,
-					"display": dsp
+					"display": dsp,
+					"active": pActive
 				}
 			};
 			
@@ -211,6 +240,7 @@
 			$('#pName').append(patient.profile.display);
 			$('#pAddress').append(patient.profile.address);
 			$('#pAge').append(patient.profile.age);
+			$('#pActive').append(patient.profile.active);
 			  
 		  })
 		  .fail(function(){
@@ -219,153 +249,121 @@
 		
 	  }
 	  
-	  // extract patient observation information
-	  $.displayPatientObservations = function(inputId){
-		  // get observations for this patient
-		var rUrl = fhirConfig.serviceUrl + "Observation?patient=" + 
-			  inputId + "&_format=" + fhirConfig.fmt + "&_pretty=" + fhirConfig.pretty;
-			  //"&_getpagesoffset=" + pData.offset + "&_count=" + pData.count + 
-	    //console.info(rUrl);
+	// extract patient observation information
 
+	$.displayPatientObservations = function(rUrl, lines){
 		// get the cached _getpages
 		$.ajax({
 			type: 'GET',
 			contentType: 'application/json; charset=utf-8',
 			dataType: 'JSON',
 			url: rUrl
-		  })
-		  .done(function(data, status){
-			rUrl = data.link[1].url;
-			
-			// get all observation records
-			rUrl = rUrl.replace("_count=10","_count="+fhirConfig.count);
-			rUrl = rUrl.replace("_getpagesoffset=10","_getpagesoffset=0");
-		  
-			$.ajax({
-				type: 'GET',
-				contentType: 'application/json; charset=utf-8',
-				dataType: 'JSON',
-				url: rUrl
-			  })
-			  .done(function(data, status){
-				var ret = data.entry;
-				var alert = false;
-				var checkAlerts = function(display, value) {
-					var alerts = {
-						"Systolic blood pressure": 170,
-						"Diastolic blood pressure": 100,
-						"Heart rate": 120,
-						"Respiratory rate": 22,
-						"Body temperature": 102, 
-						"Cholesterol [Mass/volume] in Serum or Plasma": 260,
-						"Body mass index (BMI) [Ratio]": 33
-					};
-					for (var param in alerts) {
-						if (param==display && value>alerts[param]) {
-							console.log(param);
-							return true;
-						}
-					}
-					return false;
-				};
-
-				var lines;
-				var alerts = {};
-				
-				var options = {
-					weekday: "long", year: "numeric", month: "short",
-					day: "numeric", hour: "2-digit", minute: "2-digit"
-				};
-
-				for ( var i = 0; i < ret.length; i++) {
-					var obj = ret[i];
-
-					var idx = obj.resource.id;
-					var display = obj.resource.code.coding[0].display;
-					var time = obj.resource.appliesDateTime;
-					var localTime = new Date(time.replace("T"," ").substring(0,19));
-					var offsetHour = (localTime.getTimezoneOffset()/60) + eval(time.substring(19,20) + eval(time.substring(20,22)));
-					// convert time to UTC
-					localTime.setHours(localTime.getHours() + offsetHour);
+		})
+		.done(function(data, lines){
+			console.log(data);
+			var ret = data.entry;
+			var options = {
+				weekday: "long", year: "numeric", month: "short",
+				day: "numeric", hour: "2-digit", minute: "2-digit"
+			};
+			for ( var i = 0; i < ret.length; i++) {
+				var obj = ret[i];
+				var idx = obj.resource.id;
+				var display = obj.resource.code.coding[0].display;
+				var time = obj.resource.appliesDateTime;
 					
-					var metricVal;
-
-					// check if it is string type value or quantity type value
-					if (obj.resource.valueString != null) {
-						metricVal = obj.resource.valueString;
-					} else {
-						metricVal = obj.resource.valueQuantity.value + obj.resource.valueQuantity.units;
-						// checking alerts
-						if (checkAlerts(display, obj.resource.valueQuantity.value)==true){
-							alert=true;
-							
-							if (alerts[display]==null) {
+				var localTime = new Date(time.replace("T"," ").substring(0,19));
+				var offsetHour = (localTime.getTimezoneOffset()/60) + eval(time.substring(19,20) + eval(time.substring(20,22)));
+				// convert time to UTC
+				localTime.setHours(localTime.getHours() + offsetHour);
+				
+				var metricVal;
+				// check if it is string type value or quantity type value
+				if (obj.resource.valueString != null) {
+					metricVal = obj.resource.valueString;
+				} else {
+					metricVal = obj.resource.valueQuantity.value + obj.resource.valueQuantity.units;
+					// checking alerts
+					if (checkAlerts(display, obj.resource.valueQuantity.value)==true){
+						alert=true;
+						
+						if (alerts[display]==null) {
+							alerts[display] = {
+								id: idx,
+								line: '<li>#'+ idx +': '+ display + ' = ' + metricVal +'</li>',
+								time: time
+							};
+						} else if (alerts[display]!=null) {
+							// if (Date.parse(alerts[display].time) < Date.parse(time)) {
+							if (parseInt(alerts[display].id) < parseInt(idx)) {
 								alerts[display] = {
 									id: idx,
 									line: '<li>#'+ idx +': '+ display + ' = ' + metricVal +'</li>',
 									time: time
 								};
-							} else if (alerts[display]!=null) {
-								// if (Date.parse(alerts[display].time) < Date.parse(time)) {
-								if (parseInt(alerts[display].id) < parseInt(idx)) {
-									alerts[display] = {
-										id: idx,
-										line: '<li>#'+ idx +': '+ display + ' = ' + metricVal +'</li>',
-										time: time
-									};
-								}
-							} 
-						}
+							}
+						} 
 					}
-					
-					lines += "<tr>" +
-							 "<td>" + idx + "</td>" +
-							 "<td>" + display + "</td>" +
-							 "<td>" + metricVal + "</td>" +
-							 "<td>" + localTime.toLocaleTimeString("en-Us",options) + "</td>" +
-							 "</tr>";
-					
-				};
-				// alert logic
-				if (alert==true) {
-					var alertList = '';
-					for (var alert in alerts) {
-						alertList += alerts[alert].line;
-					}
-					$('#alert').css({display: 'inherit'});
-					$('#alert').append("<ul style='list-style-type:none;'>"+alertList+"</ul>");
 				}
-					
-				console.log(ret);
-
-				$('#patient_data').append(lines);
-
+				lines = lines + "<tr>";
+				lines = lines + "<td>" + idx + "</td>";
+				lines = lines + "<td>" + display + "</td>";
+				lines = lines + "<td>" + metricVal + "</td>";
+				lines = lines + "<td>" + localTime.toLocaleTimeString("en-Us",options) + "</td>";
+				lines = lines + "</tr>";
+			};
+			$('#patient_data').append(lines);
+			if(data.link[1].relation == "next"){
+				$.displayPatientObservations(data.link[1].url, lines);
+			}
+			else{
+				var alertList = '';
+				for (var alert in alerts) {
+					alertList += alerts[alert].line;
+				}
+				if (alertList!='') {
+					$('#alert').css({display: 'inherit'});
+					$('#alertbg').css({display: 'block'});
+					$('#alert').append("<ul style='list-style-type:none;'>"+alertList+"</ul>");
+					$('#alertmessage').append("<ul style='list-style-type:none;'>"+alertList+"</ul>");
+					var dialog = document.getElementById('alertwindow');
+					dialog.show();
+					document.getElementById('exit').onclick = function() {
+						dialog.close();
+						$('#alertbg').css({display: 'none'});
+					};
+				}
+				console.log('you have reached the end');
+				$('#loading').hide();
 				$('#patients').DataTable({
 					"order": [[ 3, "desc" ]]
 				});
-				
-				$('#loading').hide();
-			  
-			  })
-			  .fail(function(){
-				alert("Ajax failed to fetch data");
-			});
-		  })
-		  .fail(function(){
+			}
+		})
+		.fail(function(){
 			alert("Ajax failed to fetch data");
 		});
-		
-	  };
-	  
+	}
       $(function () {
-		  
+      		var lines;
+
 		//var pId = $.urlParam('id');
 		var pId = <%=id%>;
-
-		$.displayPatientGI(pId);		
-		$.displayPatientObservations(pId);
-		  
+		
+		var rUrl = fhirConfig.serviceUrl + "Patient/" + 
+			pId + "?_format=" + fhirConfig.fmt + "&_pretty=" + fhirConfig.pretty;
+		console.log(rUrl);	
+		$.displayPatientGI(rUrl, pId);		
+		
+		var rUrl = fhirConfig.serviceUrl + "Observation?patient=" + pId +
+			"&_count=" + fhirConfig.count + "&_format=" + fhirConfig.fmt +
+			"&_pretty=" + fhirConfig.pretty;
+    		console.log(rUrl);
+		$.displayPatientObservations(rUrl, lines);
+		console.log('<%=alert%>');
       });
+		  
+	  var sessionTimeRemaining = <%=sessionTimeOutDuration %>;
     </script>    
 	<% include ./partials/bottom %>	
   </body>
