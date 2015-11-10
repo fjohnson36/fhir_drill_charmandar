@@ -21,7 +21,7 @@
 		
       <div class="register-box-body">
         <p class="login-box-msg">Register a new membership</p>
-        <form action="/signup" method="post">
+        <form action="/user/signup" method="post">
           <div class="form-group has-feedback">
             <input type="text" class="form-control" placeholder="First name" name="firstName">
             <span class="glyphicon glyphicon-user form-control-feedback"></span>
@@ -39,28 +39,25 @@
             <span class="glyphicon glyphicon-user form-control-feedback"></span>
           </div>
           <div class="form-group has-feedback">
-            <input type="password" class="form-control" placeholder="Password" name="password">
+            <input type="password" class="form-control" placeholder="Password" name="password" id="pass1">
             <span class="glyphicon glyphicon-lock form-control-feedback"></span>
           </div>
           <div class="form-group has-feedback">
-            <input type="password" class="form-control" placeholder="Retype password">
+            <input type="password" class="form-control" placeholder="Retype password" id="pass2" onkeyup="checkPass('pass1','pass2','confirmMessage','registerBtn'); return false;">
             <span class="glyphicon glyphicon-log-in form-control-feedback"></span>
+			<span id="confirmMessage" class="confirmMessage"></span>
           </div>
           <div class="row">
             <div class="col-xs-8">
-              <div class="checkbox icheck">
-                <label>
-                  <input type="checkbox"> I agree to the <a href="#">terms</a>
-                </label>
-              </div>
+              
             </div><!-- /.col -->
             <div class="col-xs-4">
-              <button type="submit" class="btn btn-primary btn-block btn-flat">Register</button>
+              <button type="submit" class="btn btn-primary btn-block btn-flat" id='registerBtn'>Register</button>
             </div><!-- /.col -->
           </div>
         </form>
 
-        <a href="/signin" class="text-center">I already have a membership</a>
+        <a href="/user/signin" class="text-center">I already have a membership</a>
       </div><!-- /.form-box -->
     </div><!-- /.register-box -->
 
@@ -70,6 +67,9 @@
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
     <!-- iCheck 1.0.1 -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/iCheck/1.0.1/icheck.min.js"></script>
+	<!-- password validation -->
+	<script src="/static/js/utils.js"></script>
+	  
     <script>
       $(function () {
         $('input').iCheck({
@@ -78,6 +78,7 @@
           increaseArea: '20%' // optional
         });
       });
+
     </script>
 	<% include ./partials/bottom %>	
   </body>
