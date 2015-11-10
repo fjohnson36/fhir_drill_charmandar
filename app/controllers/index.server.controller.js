@@ -1,3 +1,6 @@
+var User = require('mongoose').model('User'),
+	passport = require('passport');
+
 exports.render = function(req, res) {
 	if (req.session.lastVisit) {
 		console.log(req.session.lastVisit);		
@@ -8,7 +11,9 @@ exports.render = function(req, res) {
 	res.render('index', {
 		title: 'Hello World',
 		result: '',
-		data: ''
+		data: '',
+		userid: '',
+		sessionTimeOut: 'no'
 	});
 	
 };
