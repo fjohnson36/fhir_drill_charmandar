@@ -1,4 +1,5 @@
-var User = require('mongoose').model('User'),
+var config = require('../../config/config'),
+	User = require('mongoose').model('User'),
 	passport = require('passport');
 
 exports.render = function(req, res) {
@@ -6,39 +7,59 @@ exports.render = function(req, res) {
 	var patient_id = req.patientId;
 	var category = req.category;
 	
+	console.log('username: ' + req.user.username);
+	
 	if (category == 'observation') {
 		
-		if (!req.user) {
-			req.session.returnTo = '/patientdetail/' + patient_id + '/observation';
-				
-			res.render('signin', {
-				messages: ''
-			});
-		} else {
-			res.render('patientobservation', {
-				title: 'Patient Observations',
-				id: patient_id,
-				pagetype: 'patientobservation'
-			});
-		}
-		
+		res.render('patientobservation', {
+			title: 'Patient Observations',
+			id: patient_id,
+			pagetype: 'patientobservation',
+			userid: req.user.username,
+			alert: '',
+			username: req.user.firstName + ' ' + req.user.lastName,
+			membersince: req.user.created,
+			sessionTimeOut: 'yes',
+			sessionTimeOutDuration: config.sessionTimeOutDuration
+		});		
 		
 	} else if (category == 'condition') {
-		if (!req.user) {
-			req.session.returnTo = '/patientdetail/' + patient_id + '/condition';
-				
-			res.render('signin', {
-				messages: ''
-			});
-		} else {
-			res.render('patientcondition', {
-				title: 'Patient Conditions',
-				id: patient_id,
-				pagetype: 'patientcondition'
-			});
-		}
+		res.render('patientcondition', {
+			title: 'Patient Conditions',
+			id: patient_id,
+			pagetype: 'patientcondition',
+			userid: req.user.username,
+			username: req.user.firstName + ' ' + req.user.lastName,
+			membersince: req.user.created,
+			sessionTimeOut: 'yes',
+			sessionTimeOutDuration: config.sessionTimeOutDuration
+		});
+	} else if (category == 'prescription') {
+		res.render('patientprescription', {
+			title: 'Patient Prescription',
+			id: patient_id,
+			pagetype: 'patientprescription',
+			userid: req.user.username,
+			username: req.user.firstName + ' ' + req.user.lastName,
+			membersince: req.user.created,
+			sessionTimeOut: 'yes',
+			sessionTimeOutDuration: config.sessionTimeOutDuration
+		});
+	} else if (category == 'dispense') {
+		res.render('patientdispense', {
+			title: 'Patient Prescription Dispense',
+			id: patient_id,
+			pagetype: 'patientdispense',
+			userid: req.user.username,
+			username: req.user.firstName + ' ' + req.user.lastName,
+			membersince: req.user.created,
+			sessionTimeOut: 'yes',
+			sessionTimeOutDuration: config.sessionTimeOutDuration
+		});
 	}
 };
+
+
 
 var Patient = require('mongoose').model('Patient');
 
