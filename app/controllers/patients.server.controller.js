@@ -1,21 +1,26 @@
+var config = require('../../config/config'),
+	User = require('mongoose').model('User'),
+	passport = require('passport');
+
 exports.render = function(req, res) {
+	
+	console.log('username: ' + req.user.username);
+	
 	Patient.find({}, function(err, patients) {
 		if (err) {
 			return next(err);			
 		} else {	
-			if (!req.user) {
-				req.session.returnTo = '/patientlist';
+			res.render('patients', {
+				title: 'Patient List',
+				data: patients,
+				pagetype: 'patients',
+				userid: req.user.username,
+				username: req.user.firstName + ' ' + req.user.lastName,
+				membersince: req.user.created,
+				sessionTimeOut: 'yes',
+				sessionTimeOutDuration: config.sessionTimeOutDuration
+			});
 
-				res.render('signin', {
-					messages: ''
-				});
-			} else {
-				res.render('patients', {
-					title: 'Patient List',
-					data: patients,
-					pagetype: 'patients'
-				});
-			}
 		}
 	});
 };
