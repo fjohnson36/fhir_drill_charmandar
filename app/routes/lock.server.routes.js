@@ -1,7 +1,8 @@
-var lock = require('../../app/controllers/lock.server.controller');
+var lock = require('../controllers/lock.server.controller'),
+	passport = require('passport');
 		
 module.exports = function(app) {
 	
-	app.get('/lock', lock.render);
+	app.get('/user/lock', lock.render);
 	
 };
