@@ -161,11 +161,8 @@
 	  }
 	  
 	  // extract patient general information
-	  $.displayPatientGI = function(inputId){
-		  var rUrl = fhirConfig.serviceUrl + "Patient/" + 
-			  inputId + "?_format=" + fhirConfig.fmt + "&_pretty=" + fhirConfig.pretty;
-			  //"&_getpagesoffset=" + pData.offset + "&_count=" + pData.count + 
-		  console.info(rUrl);
+	  $.displayPatientGI = function(rUrl, inputId){
+
 		  $.ajax({
 			type: 'GET',
 			contentType: 'application/json; charset=utf-8',
@@ -229,94 +226,94 @@
 	  }
 	  
 	  // extract patient condition information
-	  $.displayPatientObservations = function(inputId){
-		  // get observations for this patient
-		var rUrl = fhirConfig.serviceUrl + "Condition?patient=" + 
-			  inputId + "&_format=" + fhirConfig.fmt + "&_pretty=" + fhirConfig.pretty;
-			  //"&_getpagesoffset=" + pData.offset + "&_count=" + pData.count + 
-	    //console.info(rUrl);
-		// get the cached _getpages
+	  $.displayPatientConditions = function(rUrl, lines){
+
 		$.ajax({
 			type: 'GET',
 			contentType: 'application/json; charset=utf-8',
 			dataType: 'JSON',
 			url: rUrl
 		  })
-		  .done(function(data, status){
-			rUrl = data.link[1].url;
-			
-			// get all observation records
-			rUrl = rUrl.replace("_count=10","_count="+fhirConfig.count);
-			rUrl = rUrl.replace("_getpagesoffset=10","_getpagesoffset=0");
-		  
-			$.ajax({
-				type: 'GET',
-				contentType: 'application/json; charset=utf-8',
-				dataType: 'JSON',
-				url: rUrl
-			  })
-			  .done(function(data, status){
-			  	console.log(data)
-				var ret = data.entry;
-				var lines;
+		  .done(function(data, lines){
+		  	console.log(data)
+			var ret = data.entry;
 				
-				var options = {
-					weekday: "long", year: "numeric", month: "short",
-					day: "numeric", hour: "2-digit", minute: "2-digit"
-				};
-				for ( var i = 0; i < ret.length; i++) {
-					var obj = ret[i];
-					var idx = obj.resource.id;
-					var snomedCode = obj.resource.code.coding[0].code;
-					var snomedName = obj.resource.code.coding[0].display;
-					var conditionStatus = obj.resource.clinicalStatus;
-					var time = obj.resource.onsetDateTime;
-					var notes = obj.resource.notes;
-					
-					var localTime = new Date(time.replace("T"," ").substring(0,19));
-					var offsetHour = (localTime.getTimezoneOffset()/60) + eval(time.substring(19,20) + eval(time.substring(20,22)));
-					// convert time to UTC
-					localTime.setHours(localTime.getHours() + offsetHour);
+			var options = {
+				weekday: "long", year: "numeric", month: "short",
+				day: "numeric", hour: "2-digit", minute: "2-digit"
+			};
+			for ( var i = 0; i < ret.length; i++) {
+				var obj = ret[i];
+				var idx = obj.resource.id;
+				var snomedCode = obj.resource.code.coding[0].code;
+				var snomedName = obj.resource.code.coding[0].display;
+				var conditionStatus = obj.resource.clinicalStatus;
+				var time = obj.resource.onsetDateTime;
+				var notes = obj.resource.notes;
+				
+				var localTime = new Date(time.replace("T"," ").substring(0,19));
+				var offsetHour = (localTime.getTimezoneOffset()/60) + eval(time.substring(19,20) + eval(time.substring(20,22)));
+				// convert time to UTC
+				localTime.setHours(localTime.getHours() + offsetHour);
 						  
-					lines = lines + "<tr>";
-					lines = lines + "<td>" + idx + "</td>";
-					lines = lines + "<td>" + snomedName + "</td>";
-					lines = lines + "<td>" + snomedCode + "</td>";
-					lines = lines + "<td>" + conditionStatus + "</td>";
-					lines = lines + "<td>" + notes + "</td>";
-					lines = lines + "<td>" + localTime.toLocaleTimeString("en-Us",options) + "</td>";
-					lines = lines + "</tr>";
-				};
-				console.log(ret);
-				
-				$('#patient_data').append(lines);
+				lines = lines + "<tr>";
+				lines = lines + "<td>" + idx + "</td>";
+				lines = lines + "<td>" + snomedName + "</td>";
+				lines = lines + "<td>" + snomedCode + "</td>";
+				lines = lines + "<td>" + conditionStatus + "</td>";
+				lines = lines + "<td>" + notes + "</td>";
+				lines = lines + "<td>" + localTime.toLocaleTimeString("en-Us",options) + "</td>";
+				lines = lines + "</tr>";
+			};
+			
+			$('#patient_data').append(lines);
+			
+			if(data.link[1]){
+				if(data.link[1].relation == "next") {
+					$.displayPatientConditions(data.link[1].url, lines);
+				}
+				else{
+					$('#loading').hide();
+					$('#patients').DataTable({
+						"order": [[ 5, "desc" ]]
+					});
+				}
+			}
+			else{
+				$('#loading').hide();
 				$('#patients').DataTable({
 					"order": [[ 5, "desc" ]]
 				});
-				
-				$('#loading').hide();
-			  
-			  })
-			  .fail(function(){
-				alert("Ajax failed to fetch data");
-			  });
-		  })
+			}
+	  	  })
 		  .fail(function(){
 			alert("Ajax failed to fetch data");
 		  });
-		
 	  }
 	  
       $(function () {
-		  
+		
+		var lines;
+		
 		//var pId = $.urlParam('id');
 		var pId = <%=id%>;
 
-		$.displayPatientGI(pId);		
-		$.displayPatientObservations(pId);
+		var rUrl = fhirConfig.serviceUrl + "Patient/" + 
+			pId + "?_format=" + fhirConfig.fmt + "&_pretty=" + fhirConfig.pretty;
+		console.log(rUrl);	
+
+		$.displayPatientGI(rUrl, pId);
+		
+		var rUrl = fhirConfig.serviceUrl + "Condition?patient=" + pId +
+			"&_count=" + fhirConfig.count + "&_format=" + fhirConfig.fmt +
+			"&_pretty=" + fhirConfig.pretty;
+    		console.log(rUrl);
+
+		$.displayPatientConditions(rUrl, lines);
 		  
       });
       
+	  var sessionTimeRemaining = <%=sessionTimeOutDuration %>;
     </script>    
 	<% include ./partials/bottom %>	
   </body>
