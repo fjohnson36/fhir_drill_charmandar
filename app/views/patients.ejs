@@ -78,18 +78,18 @@
     <!--script src="../fhir/fhir-client.min.js"></script-->
 
     <!-- jQuery 2.1.4 -->
-    <script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+    <script src="/static/js/jquery-2.1.4.min.js"></script>
     <!-- Bootstrap 3.3.5 -->
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+    <script src="/static/js/bootstrap.min.js"></script>
 	<!-- DataTables -->
-    <script src="https://cdn.datatables.net/1.10.9/js/jquery.dataTables.min.js"></script>
-    <script src="https://cdn.datatables.net/1.10.9/js/dataTables.bootstrap.min.js"></script>
+    <script src="/static/js/jquery.dataTables.min.js"></script>
+    <script src="/static/js/dataTables.bootstrap.min.js"></script>
 	<!-- SlimScroll -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jQuery-slimScroll/1.3.6/jquery.slimscroll.min.js"></script>
+    <script src="/static/js/jquery.slimscroll.min.js"></script>
 	<!-- iCheck 1.0.1 -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/iCheck/1.0.1/icheck.min.js"></script>
+    <script src="/static/js/icheck.min.js"></script>
     <!-- FastClick -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/fastclick/1.0.6/fastclick.min.js"></script>
+    <script src="/static/js/fastclick.min.js"></script>
     <!-- AdminLTE App -->
     <script src="/static/js/app.min.js"></script>
 
@@ -100,6 +100,32 @@
 	  
 	<!-- page script -->
     <script>
+	  // update the onWatch status of Patient
+	  $.updatePatientOnWatchStatus = function(event, o){
+		//alert(event.type + ' callback ' + o.value);
+		  
+		var rUrl = '/patient/' + o.value +'/' + event.type;
+		
+		$.ajax({
+			type: 'GET',
+			contentType: 'application/json; charset=utf-8',
+			dataType: 'text',
+			url: rUrl
+		})
+		.done(function(data, status){
+			console.log(data);
+			
+			if (event.type == 'ifChecked')
+				$('#onWatch' + o.value).html('checked');
+			else
+				$('#onWatch' + o.value).html('');
+			
+		})
+		.fail(function(){
+			alert("Ajax failed to fetch data");
+		});
+	  }
+	  	  
 	  // extract patient general information
 	  $.displayPatients = function(){
 		  var rUrl = "/patients";
@@ -125,17 +151,17 @@
 
 					lines = lines + "<tr>";
 
-					var idx = obj.resource.id;
+					var idx = obj.id;
 					var fName = "";
 					var lName = "";
 					var address = "";
+					var onWatch = "";
 					
 					try {
-						fName = obj.resource.name[0].given[0];
-						lName = obj.resource.name[0].family[0];
-						address = obj.resource.address[0].line[0] + ", " + 
-							obj.resource.address[0].city + ", " +
-							obj.resource.address[0].state;
+						fName = obj.name[0].given[0];
+						lName = obj.name[0].family[0];
+						address = obj.address;
+						onWatch = obj.onWatch || '';
 					} catch(e) {
 						console.log('id=' + idx + ', no objects');
 					}
@@ -144,30 +170,43 @@
 					lines = lines + "<td>" + lName + "</td>";
 					lines = lines + "<td>" + fName + "</td>";
 					lines = lines + "<td>" + address + "</td>";
-					lines = lines + "<td><input type='checkbox' class='flat-red' style='position: absolute; opacity: 0;'></td>";
+					lines = lines + "<td><input type='checkbox' value='" + idx + 
+						"' " + onWatch + 
+						" class='flat-green' style='position: absolute; opacity: 0;'>" + 
+						"<span style='display:none' id='onWatch" + idx + "'>" + onWatch + "</span></td>";
+
 					lines = lines + "</tr>";
 
 				};
+
 				$('#loading').hide();
 
 				  //console.log(lines);
 				$('#patient_data').append(lines);
-				
+
 				//iCheck for checkbox and radio inputs
 				$('input[type="checkbox"].minimal, input[type="radio"].minimal').iCheck({
 				  checkboxClass: 'icheckbox_minimal-blue',
 				  radioClass: 'iradio_minimal-blue'
 				});
 				//Flat red color scheme for iCheck
-				$('input[type="checkbox"].flat-red, input[type="radio"].flat-red').iCheck({
+				$('input[type="checkbox"].flat-green, input[type="radio"].flat-green').iCheck({
 				  checkboxClass: 'icheckbox_flat-green',
 				  radioClass: 'iradio_flat-green'
 				});
-				
-
-				$('#patients').DataTable();
-
-				
+			  
+			    //callback if checked for iCheck
+				$('input[type="checkbox"].flat-green, input[type="radio"].flat-green').on('ifChecked', function(event){
+				  $.updatePatientOnWatchStatus(event, this);
+				});
+			  	//callback if unchecked for iCheck
+				$('input[type="checkbox"].flat-green, input[type="radio"].flat-green').on('ifUnchecked', function(event){
+				  $.updatePatientOnWatchStatus(event, this);
+				});
+			  
+                $('#patients').DataTable({
+					"order": [[ 4, "desc" ],[ 0, "asc" ]]
+				});
 
 		  })
 		  .fail(function(){
@@ -180,6 +219,8 @@
 		$.displayPatients();
 		
       });
+
+	  var sessionTimeRemaining = <%=sessionTimeOutDuration %>;
     </script>    
 	<% include ./partials/bottom %>		
   </body>
