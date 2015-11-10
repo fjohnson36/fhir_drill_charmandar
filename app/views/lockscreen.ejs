@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Clinical Support Decision - Charmander | Lockscreen</title>
+    <title>Clinical Support Decision - Charmander | <%=title %></title>
     <% include ./partials/head %>
   </head>
   <body class="hold-transition lockscreen">
@@ -11,20 +11,21 @@
         <a href="/"><b>CSD</b>Charmander</a>
       </div>
       <!-- User name -->
-      <div class="lockscreen-name">Daniel Jung</div>
+      <div class="lockscreen-name"><%=username %></div>
 
       <!-- START LOCK SCREEN ITEM -->
       <div class="lockscreen-item">
         <!-- lockscreen image -->
         <div class="lockscreen-image">
-          <img src="http://someboyj.pe.kr/gacs6440/ui/dist/img/sjung93.jpg" alt="User Image">
+          <img id="profile_image" src="/static/img/avatar/<%=userid %>.jpg" alt="User Image" onerror="this.src='/static/img/avatar/default.jpg'">
         </div>
         <!-- /.lockscreen-image -->
 
         <!-- lockscreen credentials (contains the form) -->
-        <form class="lockscreen-credentials">
+		<form action="/user/signin" method="post" class="lockscreen-credentials">
           <div class="input-group">
-            <input type="password" class="form-control" placeholder="password">
+			<input type="hidden" name="username" value="<%=userid %>">
+            <input type="password" class="form-control" placeholder="password" name="password">
             <div class="input-group-btn">
               <button class="btn"><i class="fa fa-arrow-right text-muted"></i></button>
             </div>
@@ -36,7 +37,7 @@
         Enter your password to retrieve your session
       </div>
       <div class="text-center">
-        <a href="login.html">Or sign in as a different user</a>
+        <a href="/user/signin">Or sign in as a different user</a>
       </div>
       <div class="lockscreen-footer text-center">
         Copyright &copy; 2015 <b><a href="#" class="text-black">GT CS6440 Charmander</a></b><br>
