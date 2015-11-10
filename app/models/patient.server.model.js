@@ -12,6 +12,7 @@ var PatientSchema = new Schema({
 	gender: String,
 	address: String,
 	birthDate: String,
+	onWatch: String,
 	created: {
 		type: Date,
 		default: Date.now
