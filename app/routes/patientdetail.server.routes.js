@@ -1,7 +1,8 @@
-var patient = require('../../app/controllers/patientdetail.server.controller');
+var patient = require('../controllers/patientdetail.server.controller'),
+	utils = require('./utils');
 
 module.exports = function(app) {
-	app.get('/patientdetail/:patientId/:category', patient.render);
+	app.get('/patientdetail/:patientId/:category', utils.ensureAuthenticated, patient.render);
 	
 	app.route('/patient/:patientId')
 		.get(patient.read)
